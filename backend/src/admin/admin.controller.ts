@@ -19,14 +19,7 @@ export class AdminController {
     const totalViewsAgg = await this.prisma.manga.aggregate({ _sum: { views: true } });
     const totalViews = totalViewsAgg._sum.views ?? 0;
     const pendingPayments = await this.prisma.payment.count({ where: { status: 'pending' } });
-
-    let activeAds = 0;
-    try {
-      // advertisement model may not exist yet in Prisma schema; guard against that
-      activeAds = await (this.prisma as any).advertisement?.count() ?? 0;
-    } catch (e) {
-      activeAds = 0;
-    }
+    const activeAds = await this.prisma.advertisement.count({ where: { isActive: true, OR: [{ startDate: null }, { startDate: { lte: new Date() } }], AND: [{ endDate: null }, { endDate: { gte: new Date() } }] } });
 
     return {
       totalUsers,
