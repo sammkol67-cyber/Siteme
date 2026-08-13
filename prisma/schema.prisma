@@ -1,0 +1,190 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../backend/node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  users     User[]
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id                   Int       @id @default(autoincrement())
+  username             String    @unique
+  email                String    @unique
+  password             String
+  avatarUrl            String?
+  roleId               Int
+  role                 Role      @relation(fields: [roleId], references: [id])
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  forcePasswordChange  Boolean   @default(false)
+  lastLoginAt          DateTime?
+  readingHistories     ReadingHistory[]
+  favorites            Favorite[]
+  comments             Comment[]
+  payments             Payment[]
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  slug      String   @unique
+  mangas    MangaCategory[]
+  createdAt DateTime @default(now())
+}
+
+model Manga {
+  id            Int      @id @default(autoincrement())
+  title         String
+  altTitle      String?
+  slug          String   @unique
+  coverUrl      String?
+  bannerUrl     String?
+  description   String?
+  author        String?
+  artist        String?
+  status        String?
+  releaseYear   Int?
+  rating        Float?   @default(0)
+  views         Int      @default(0)
+  chapters      Chapter[]
+  categories    MangaCategory[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model MangaCategory {
+  manga   Manga @relation(fields: [mangaId], references: [id])
+  mangaId Int
+  category Category @relation(fields: [categoryId], references: [id])
+  categoryId Int
+
+  @@id([mangaId, categoryId])
+}
+
+model Chapter {
+  id         Int       @id @default(autoincrement())
+  manga      Manga     @relation(fields: [mangaId], references: [id])
+  mangaId    Int
+  number     Int
+  title      String?
+  isPremium  Boolean   @default(false)
+  publishAt  DateTime?
+  pages      ChapterPage[]
+  createdAt  DateTime  @default(now())
+}
+
+model ChapterPage {
+  id        Int    @id @default(autoincrement())
+  chapter   Chapter @relation(fields: [chapterId], references: [id])
+  chapterId Int
+  pageIndex Int
+  imageUrl  String
+  createdAt DateTime @default(now())
+
+  @@index([chapterId, pageIndex])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  manga     Manga?   @relation(fields: [mangaId], references: [id])
+  mangaId   Int?
+  content   String
+  createdAt DateTime @default(now())
+  likes     CommentLike[]
+}
+
+model CommentLike {
+  id        Int     @id @default(autoincrement())
+  comment   Comment @relation(fields: [commentId], references: [id])
+  commentId Int
+  user      User    @relation(fields: [userId], references: [id])
+  userId    Int
+  createdAt DateTime @default(now())
+
+  @@unique([commentId, userId])
+}
+
+model Favorite {
+  id        Int     @id @default(autoincrement())
+  user      User    @relation(fields: [userId], references: [id])
+  userId    Int
+  manga     Manga   @relation(fields: [mangaId], references: [id])
+  mangaId   Int
+  createdAt DateTime @default(now())
+
+  @@unique([userId, mangaId])
+}
+
+model ReadingHistory {
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      Int
+  manga       Manga    @relation(fields: [mangaId], references: [id])
+  mangaId     Int
+  chapter     Chapter? @relation(fields: [chapterId], references: [id])
+  chapterId   Int?
+  progress    Float    @default(0) // percent
+  lastOpened  DateTime @default(now())
+}
+
+model SubscriptionPlan {
+  id          Int     @id @default(autoincrement())
+  name        String
+  durationDays Int
+  price       Float
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model Subscription {
+  id        Int     @id @default(autoincrement())
+  user      User    @relation(fields: [userId], references: [id])
+  userId    Int
+  plan      SubscriptionPlan @relation(fields: [planId], references: [id])
+  planId    Int
+  startsAt  DateTime
+  expiresAt DateTime
+  status    String  @default("active")
+}
+
+model Payment {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+  plan       SubscriptionPlan @relation(fields: [planId], references: [id])
+  planId     Int
+  amount     Float
+  receiptUrl String?
+  status     String   @default("pending")
+  createdAt  DateTime @default(now())
+  adminId    Int?
+}
+
+model Notification {
+  id        Int     @id @default(autoincrement())
+  title     String
+  body      String
+  imageUrl  String?
+  link      String?
+  createdAt DateTime @default(now())
+}
+
+model NotificationRead {
+  id             Int      @id @default(autoincrement())
+  notification   Notification @relation(fields: [notificationId], references: [id])
+  notificationId Int
+  user           User     @relation(fields: [userId], references: [id])
+  userId         Int
+  readAt         DateTime @default(now())
+}

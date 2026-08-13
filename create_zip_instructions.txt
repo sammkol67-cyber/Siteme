@@ -1,0 +1,7 @@
+To create the ZIP using this scaffold, run:
+
+1. Ensure this directory contains the full manga-platform folder.
+2. From the directory containing manga-platform, run:
+   zip -r manga-platform.zip manga-platform
+
+Or run the provided top-level script to generate the ZIP directly (if you used that method).

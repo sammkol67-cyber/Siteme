@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+.env.local
+.migrations
+.prisma
+**/node_modules
+**/.next
+**/dist
+/.vscode
+.DS_Store
